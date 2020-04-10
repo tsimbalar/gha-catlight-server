@@ -17,8 +17,7 @@ open GhaCatlightServer.App
 // ---------------------------------
 
 let createHost() =
-    WebHostBuilder()
-        .UseContentRoot(Directory.GetCurrentDirectory())
+    WebHostBuilder().UseContentRoot(Directory.GetCurrentDirectory())
         .Configure(Action<IApplicationBuilder> GhaCatlightServer.App.configureApp)
         .ConfigureServices(Action<IServiceCollection> GhaCatlightServer.App.configureServices)
 
@@ -27,36 +26,33 @@ let runTask task =
     |> Async.AwaitTask
     |> Async.RunSynchronously
 
-let httpGet (path : string) (client : HttpClient) =
+let httpGet (path: string) (client: HttpClient) =
     path
     |> client.GetAsync
     |> runTask
 
-let isStatus (code : HttpStatusCode) (response : HttpResponseMessage) =
+let isStatus (code: HttpStatusCode) (response: HttpResponseMessage) =
     Assert.Equal(code, response.StatusCode)
     response
 
-let ensureSuccess (response : HttpResponseMessage) =
-    if not response.IsSuccessStatusCode
-    then response.Content.ReadAsStringAsync() |> runTask |> failwithf "%A"
-    else response
+let ensureSuccess (response: HttpResponseMessage) =
+    if not response.IsSuccessStatusCode then
+        response.Content.ReadAsStringAsync()
+        |> runTask
+        |> failwithf "%A"
+    else
+        response
 
-let readText (response : HttpResponseMessage) =
-    response.Content.ReadAsStringAsync()
-    |> runTask
+let readText (response: HttpResponseMessage) = response.Content.ReadAsStringAsync() |> runTask
 
-let jsonStringCleanUp (s:string) = 
-    JsonConvert.SerializeObject( JsonConvert.DeserializeObject(s), Formatting.Indented)
+let jsonStringCleanUp (s: string) = JsonConvert.SerializeObject(JsonConvert.DeserializeObject(s), Formatting.Indented)
 
 
-let shouldEqual expected actual =
-    Assert.Equal(expected, actual)
+let shouldEqual expected actual = Assert.Equal(expected, actual)
 
-let shouldEqualJson expected actual =
-    Assert.Equal(expected |> jsonStringCleanUp, actual |> jsonStringCleanUp)
+let shouldEqualJson expected actual = Assert.Equal(expected |> jsonStringCleanUp, actual |> jsonStringCleanUp)
 
-let shouldContain (expected : string) (actual : string) =
-    Assert.Contains(expected, actual)
+let shouldContain (expected: string) (actual: string) = Assert.Contains(expected, actual)
 
 
 // ---------------------------------
@@ -64,7 +60,7 @@ let shouldContain (expected : string) (actual : string) =
 // ---------------------------------
 
 [<Fact>]
-let ``Route / returns "Nothing to see here"`` () =
+let ``Route / returns "Nothing to see here"``() =
     use server = new TestServer(createHost())
     use client = server.CreateClient()
 
@@ -76,29 +72,27 @@ let ``Route / returns "Nothing to see here"`` () =
 
 
 [<Fact>]
-let ``Route /basic returns Catlight basic protocol"`` () =
+let ``Route /basic returns Catlight basic protocol"``() =
     use server = new TestServer(createHost())
     use client = server.CreateClient()
 
-    let expectedData : BasicServerPayload = {
-            protocol= "catlight.io/protocol/v1.0/basic"
-            id="SERVER_ID"
-            webUrl= Some( Uri("http://www.perdu.com"))
-            name="Server Name"
-            serverVersion = None
-            currentUser = None
-            spaces = []
-        }
+    let expectedData: BasicServerPayload =
+        { protocol = "catlight.io/protocol/v1.0/basic"
+          id = "SERVER_ID"
+          webUrl = Some(Uri("http://www.perdu.com"))
+          name = "Server Name"
+          serverVersion = None
+          currentUser = None
+          spaces = [] }
 
-    let expectedJson = 
-        """
+    let expectedJson = """
         {
             "protocol":"catlight.io/protocol/v1.0/basic",
             "id": "SERVER_ID",
             "webUrl": "http://www.perdu.com",
             "name": "Server Name",
             "spaces": []
-        }""" 
+        }"""
 
     client
     |> httpGet "/basic"
@@ -108,7 +102,7 @@ let ``Route /basic returns Catlight basic protocol"`` () =
 
 
 [<Fact>]
-let ``Route which doesn't exist returns 404 Page not found`` () =
+let ``Route which doesn't exist returns 404 Page not found``() =
     use server = new TestServer(createHost())
     use client = server.CreateClient()
 
