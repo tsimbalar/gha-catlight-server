@@ -47,14 +47,14 @@ let shouldEqual expected actual =
     Assert.Equal(expected, actual)
 
 let shouldContain (expected : string) (actual : string) =
-    Assert.True(actual.Contains expected)
+    Assert.Contains(expected, actual)
 
 // ---------------------------------
 // Tests
 // ---------------------------------
 
 [<Fact>]
-let ``Route / returns "Hello world, from Giraffe!"`` () =
+let ``Route / returns "Nothing to see here"`` () =
     use server = new TestServer(createHost())
     use client = server.CreateClient()
 
@@ -62,18 +62,8 @@ let ``Route / returns "Hello world, from Giraffe!"`` () =
     |> httpGet "/"
     |> ensureSuccess
     |> readText
-    |> shouldContain "Hello world, from Giraffe!"
+    |> shouldContain "Nothing to see here"
 
-[<Fact>]
-let ``Route /hello/fooBar returns "Hello fooBar, from Giraffe!"`` () =
-    use server = new TestServer(createHost())
-    use client = server.CreateClient()
-
-    client
-    |> httpGet "/hello/fooBar"
-    |> ensureSuccess
-    |> readText
-    |> shouldContain "Hello fooBar, from Giraffe!"
 
 [<Fact>]
 let ``Route which doesn't exist returns 404 Page not found`` () =
