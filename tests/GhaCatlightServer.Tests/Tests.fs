@@ -9,6 +9,8 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.TestHost
 open Microsoft.Extensions.DependencyInjection
+open Newtonsoft.Json
+open GhaCatlightServer.App
 
 // ---------------------------------
 // Helper functions (extend as you need)
@@ -43,11 +45,19 @@ let readText (response : HttpResponseMessage) =
     response.Content.ReadAsStringAsync()
     |> runTask
 
+let jsonStringCleanUp (s:string) = 
+    JsonConvert.SerializeObject( JsonConvert.DeserializeObject(s), Formatting.Indented)
+
+
 let shouldEqual expected actual =
     Assert.Equal(expected, actual)
 
+let shouldEqualJson expected actual =
+    Assert.Equal(expected |> jsonStringCleanUp, actual |> jsonStringCleanUp)
+
 let shouldContain (expected : string) (actual : string) =
     Assert.Contains(expected, actual)
+
 
 // ---------------------------------
 // Tests
@@ -63,6 +73,38 @@ let ``Route / returns "Nothing to see here"`` () =
     |> ensureSuccess
     |> readText
     |> shouldContain "Nothing to see here"
+
+
+[<Fact>]
+let ``Route /basic returns Catlight basic protocol"`` () =
+    use server = new TestServer(createHost())
+    use client = server.CreateClient()
+
+    let expectedData : BasicServerPayload = {
+            protocol= "catlight.io/protocol/v1.0/basic"
+            id="SERVER_ID"
+            webUrl= Some( Uri("http://www.perdu.com"))
+            name="Server Name"
+            serverVersion = None
+            currentUser = None
+            spaces = []
+        }
+
+    let expectedJson = 
+        """
+        {
+            "protocol":"catlight.io/protocol/v1.0/basic",
+            "id": "SERVER_ID",
+            "webUrl": "http://www.perdu.com",
+            "name": "Server Name",
+            "spaces": []
+        }""" 
+
+    client
+    |> httpGet "/basic"
+    |> ensureSuccess
+    |> readText
+    |> shouldEqualJson expectedJson
 
 
 [<Fact>]
